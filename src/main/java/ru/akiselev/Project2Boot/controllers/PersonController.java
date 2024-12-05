@@ -8,15 +8,18 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import ru.akiselev.Project2Boot.models.Person;
 import ru.akiselev.Project2Boot.services.PeopleService;
+import ru.akiselev.Project2Boot.util.PersonValidator;
 
 @Controller
 @RequestMapping("/people")
 public class PersonController {
     private final PeopleService peopleService;
+    private final PersonValidator personValidator;
 
     @Autowired
-    public PersonController(PeopleService peopleService) {
+    public PersonController(PeopleService peopleService, PersonValidator personValidator) {
         this.peopleService = peopleService;
+        this.personValidator = personValidator;
     }
 
     @GetMapping
@@ -54,6 +57,7 @@ public class PersonController {
 
     @PostMapping
     public String create(@ModelAttribute("person") @Valid Person person, BindingResult bindingResult) {
+        personValidator.validate(person, bindingResult);
         if (bindingResult.hasErrors())
             return "people/new";
         peopleService.create(person);

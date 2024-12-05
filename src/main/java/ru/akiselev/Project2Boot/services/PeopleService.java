@@ -2,11 +2,17 @@ package ru.akiselev.Project2Boot.services;
 
 import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.akiselev.Project2Boot.models.Book;
 import ru.akiselev.Project2Boot.models.Person;
 import ru.akiselev.Project2Boot.repositories.PeopleRepository;
+import ru.akiselev.Project2Boot.security.PersonDetails;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -14,15 +20,19 @@ import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 @Transactional(readOnly = true)
 public class PeopleService {
     private final PeopleRepository peopleRepository;
+    private final PasswordEncoder passwordEncoder;
+
 
     @Autowired
-    public PeopleService(PeopleRepository peopleRepository) {
+    public PeopleService(PeopleRepository peopleRepository, PasswordEncoder passwordEncoder) {
         this.peopleRepository = peopleRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public List<Person> findAll() {
@@ -37,6 +47,7 @@ public class PeopleService {
 
     @Transactional
     public void create(Person person) {
+        person.setPassword(passwordEncoder.encode(person.getPassword()));
         peopleRepository.save(person);
     }
 
@@ -59,6 +70,10 @@ public class PeopleService {
         });
 
         return booksMap;
+    }
+
+    public Optional<Person> loadUserByUsername(String username) {
+        return this.peopleRepository.findByUsername(username);
     }
 
 }
